@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+}
+
+group 'com.exaroton.bungee'
+version '1.0.0'
+
+repositories {
+    maven {
+        name 'velocity'
+        url 'https://nexus.velocitypowered.com/repository/maven-public/'
+    }
+    mavenCentral()
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    implementation 'com.velocitypowered:velocity-api:1.1.8'
+    annotationProcessor 'com.velocitypowered:velocity-api:1.1.8'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation(name: 'java-exaroton-api-1.1.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-jdk14'
+    }
+    implementation 'org.slf4j:slf4j-log4j12:1.7.9'
+}
+
+jar {
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
