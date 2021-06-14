@@ -278,9 +278,7 @@ public class ExarotonPlugin {
      */
     public void startWatchingServers() {
         if (config.getBoolean("watch-servers")) {
-            this.getProxy().getScheduler().buildTask(this, () -> {
-                this.watchServers();
-            }).schedule();
+            this.getProxy().getScheduler().buildTask(this, this::watchServers).schedule();
         }
     }
 
