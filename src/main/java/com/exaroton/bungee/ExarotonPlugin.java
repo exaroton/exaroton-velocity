@@ -325,6 +325,7 @@ public class ExarotonPlugin {
                     if (server.hasStatus(new int[]{ServerStatus.ONLINE, ServerStatus.STARTING,
                             ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING})) {
                         logger.log(Level.INFO, server.getAddress() + " is already online or starting!");
+                        this.listenToStatus(server, null, null);
                         return;
                     }
 
