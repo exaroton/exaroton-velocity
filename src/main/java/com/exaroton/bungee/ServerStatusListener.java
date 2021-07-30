@@ -75,12 +75,12 @@ public class ServerStatusListener extends ServerStatusSubscriber {
                 this.sendInfo("Server "+serverName+" already exists in bungee network", NamedTextColor.RED);
                 return;
             }
-            serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getHost(), newServer.getPort()));
-            proxy.registerServer(serverInfo);
+            this.serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getHost(), newServer.getPort()));
+            proxy.registerServer(this.serverInfo);
             this.sendInfo("[exaroton] " + newServer.getAddress() + " went online!", NamedTextColor.GREEN);
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
-            proxy.unregisterServer(serverInfo);
+            proxy.unregisterServer(this.serverInfo);
             this.sendInfo("[exaroton] " + newServer.getAddress() + " is no longer online!", NamedTextColor.RED);
         }
     }

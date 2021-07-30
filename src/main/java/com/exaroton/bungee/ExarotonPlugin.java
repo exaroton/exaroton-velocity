@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-@Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your bungee proxy")
+@Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your bungee proxy", authors = {"Aternos GmbH"})
 public class ExarotonPlugin {
 
     /**
@@ -78,8 +78,7 @@ public class ExarotonPlugin {
     public void onProxyInitialization(ProxyInitializeEvent event) {
         if (this.config != null && this.createExarotonClient()) {
             this.registerCommands();
-            this.startWatchingServers();
-            this.autoStartServers();
+            this.runAsyncTasks();
         }
     }
 
@@ -260,10 +259,12 @@ public class ExarotonPlugin {
      * @param info velocity server info
      */
     public void listenToStatus(Server server, CommandSource sender, ServerInfo info, String name) {
+        logger.log(Level.INFO, "Listening to status" + info);
         if (statusListeners.containsKey(server.getId())) {
             statusListeners.get(server.getId())
                     .setSender(sender)
-                    .setServerInfo(info);
+                    .setServerInfo(info)
+                    .setName(name);
             return;
         }
         server.subscribe();
@@ -278,10 +279,13 @@ public class ExarotonPlugin {
     /**
      * start watching servers in the bungee config
      */
-    public void startWatchingServers() {
-        if (config.getBoolean("watch-servers")) {
-            this.getProxy().getScheduler().buildTask(this, this::watchServers).schedule();
-        }
+    public void runAsyncTasks() {
+        this.getProxy().getScheduler().buildTask(this, () -> {
+            if (config.getBoolean("watch-servers")) {
+                this.watchServers();
+            }
+            this.autoStartServers();
+        }).schedule();
     }
 
     /**
