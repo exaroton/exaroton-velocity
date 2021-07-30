@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 @Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your bungee proxy")
 public class ExarotonPlugin {
@@ -258,7 +259,7 @@ public class ExarotonPlugin {
      * @param sender command sender to update
      * @param info velocity server info
      */
-    public void listenToStatus(Server server, CommandSource sender, ServerInfo info) {
+    public void listenToStatus(Server server, CommandSource sender, ServerInfo info, String name) {
         if (statusListeners.containsKey(server.getId())) {
             statusListeners.get(server.getId())
                     .setSender(sender)
@@ -266,9 +267,10 @@ public class ExarotonPlugin {
             return;
         }
         server.subscribe();
-        ServerStatusListener listener = new ServerStatusListener(this.getProxy())
+        ServerStatusListener listener = new ServerStatusListener(this.getProxy(), this.getLogger())
                 .setSender(sender)
-                .setServerInfo(info);
+                .setServerInfo(info)
+                .setName(name);
         server.addStatusSubscriber(listener);
         statusListeners.put(server.getId(), listener);
     }
@@ -297,7 +299,7 @@ public class ExarotonPlugin {
                         proxy.unregisterServer(registeredServer.getServerInfo());
                         logger.info("Server " + address + " is offline, removed it from the server list!");
                     }
-                    this.listenToStatus(server, null, registeredServer.getServerInfo());
+                    this.listenToStatus(server, null, registeredServer.getServerInfo(), null);
                 } catch (APIException e) {
                     logger.log(Level.SEVERE, "Failed to access API, not watching "+address, e);
                 }
@@ -323,7 +325,7 @@ public class ExarotonPlugin {
                     if (server.hasStatus(new int[]{ServerStatus.ONLINE, ServerStatus.STARTING,
                             ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING})) {
                         logger.log(Level.INFO, server.getAddress() + " is already online or starting!");
-                        this.listenToStatus(server, null, null);
+                        this.listenToStatus(server, null, null, findServerName(server.getAddress()));
                         return;
                     }
 
@@ -333,7 +335,7 @@ public class ExarotonPlugin {
                     }
 
                     logger.log(Level.INFO, "Starting "+ server.getAddress());
-                    this.listenToStatus(server, null, null);
+                    this.listenToStatus(server, null, null, findServerName(server.getAddress()));
                     server.start();
 
                 } catch (APIException e) {
@@ -355,5 +357,19 @@ public class ExarotonPlugin {
      */
     public Logger getLogger() {
         return logger;
+    }
+
+    /**
+     * try to find the server name in the velocity config
+     * @param address exaroton address e.g. example.exaroton.com
+     * @return server name e.g. lobby
+     */
+    public String findServerName(String address) {
+        for (Map.Entry<String, String> entry : proxy.getConfiguration().getServers().entrySet()) {
+            if (entry.getValue().matches(Pattern.quote(address) + ":\\d+")) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 }

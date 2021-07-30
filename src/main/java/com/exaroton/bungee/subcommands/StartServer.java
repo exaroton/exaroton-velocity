@@ -40,7 +40,7 @@ public class StartServer extends SubCommand {
                 return;
             }
 
-            plugin.listenToStatus(server, sender, null);
+            plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()));
             server.start();
 
             sender.sendMessage(Component.text("Starting server...").color(NamedTextColor.WHITE));

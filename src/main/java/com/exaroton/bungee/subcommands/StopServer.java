@@ -40,7 +40,7 @@ public class StopServer extends SubCommand {
                 return;
             }
 
-            plugin.listenToStatus(server, sender, null);
+            plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()));
             server.stop();
             sender.sendMessage(Component.text("Stopping server...").color(NamedTextColor.WHITE));
         } catch (APIException e) {

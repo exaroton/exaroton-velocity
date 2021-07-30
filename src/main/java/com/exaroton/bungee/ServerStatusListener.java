@@ -11,6 +11,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ServerStatusListener extends ServerStatusSubscriber {
 
@@ -18,6 +20,11 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      * bungee proxy
      */
     private final ProxyServer proxy;
+
+    /**
+     * logger
+     */
+    private final Logger logger;
 
     /**
      * optional command sender
@@ -29,8 +36,14 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      */
     private ServerInfo serverInfo;
 
-    public ServerStatusListener(ProxyServer proxy) {
+    /**
+     * server name in proxy
+     */
+    private String name;
+
+    public ServerStatusListener(ProxyServer proxy, Logger logger) {
         this.proxy = proxy;
+        this.logger = logger;
     }
 
     public ServerStatusListener setServerInfo(ServerInfo serverInfo) {
@@ -47,15 +60,22 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         return this;
     }
 
+    public ServerStatusListener setName(String name) {
+        if (name != null) {
+            this.name = name;
+        }
+        return this;
+    }
+
     @Override
     public void statusUpdate(Server oldServer, Server newServer) {
-        String serverName = this.serverInfo == null ? newServer.getName() : this.serverInfo.getName();
+        String serverName = this.serverInfo == null ? (this.name == null ? newServer.getName() : this.name) : this.serverInfo.getName();
         if (!oldServer.hasStatus(ServerStatus.ONLINE) && newServer.hasStatus(ServerStatus.ONLINE)) {
             if (proxy.getServer(serverName).isPresent()) {
                 this.sendInfo("Server "+serverName+" already exists in bungee network", NamedTextColor.RED);
                 return;
             }
-            serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getAddress(), newServer.getPort()));
+            serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getHost(), newServer.getPort()));
             proxy.registerServer(serverInfo);
             this.sendInfo("[exaroton] " + newServer.getAddress() + " went online!", NamedTextColor.GREEN);
         }
@@ -71,8 +91,8 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      */
     public void sendInfo(String message, TextColor color) {
         Component text = Component.text(message).color(color);
-        proxy.getConsoleCommandSource().sendMessage(text);
-        if (sender != null) {
+        logger.log(Level.INFO, message);
+        if (sender != null && !sender.equals(proxy.getConsoleCommandSource())) {
             sender.sendMessage(text);
             //unsubscribe user from further updates
             this.sender = null;
