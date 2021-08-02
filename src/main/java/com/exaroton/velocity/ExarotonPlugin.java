@@ -29,7 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-@Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your bungee proxy", authors = {"Aternos GmbH"})
+@Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your velocity proxy", authors = {"Aternos GmbH"})
 public class ExarotonPlugin {
 
     /**
@@ -280,7 +280,7 @@ public class ExarotonPlugin {
     }
 
     /**
-     * start watching servers in the bungee config
+     * start autostart and watch servers
      */
     public void runAsyncTasks() {
         this.getProxy().getScheduler().buildTask(this, () -> {
@@ -292,7 +292,7 @@ public class ExarotonPlugin {
     }
 
     /**
-     * watch servers in the bungee config
+     * watch servers in the velocity config
      */
     public void watchServers(){
         for (RegisteredServer registeredServer: proxy.getAllServers()) {

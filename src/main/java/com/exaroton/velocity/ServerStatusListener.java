@@ -22,7 +22,7 @@ public class ServerStatusListener extends ServerStatusSubscriber {
     private final ExarotonPlugin plugin;
 
     /**
-     * bungee proxy
+     * velocity proxy
      */
     private final ProxyServer proxy;
 
