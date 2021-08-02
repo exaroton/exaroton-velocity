@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group 'com.exaroton.bungee'
+group 'com.exaroton.velocity'
 version '1.0.0'
 
 repositories {

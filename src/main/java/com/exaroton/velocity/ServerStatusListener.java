@@ -1,4 +1,4 @@
-package com.exaroton.bungee;
+package com.exaroton.velocity;
 
 import com.exaroton.api.server.Server;
 import com.exaroton.api.server.ServerStatus;

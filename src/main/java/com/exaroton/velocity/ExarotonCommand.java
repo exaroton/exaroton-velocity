@@ -1,7 +1,7 @@
-package com.exaroton.bungee;
+package com.exaroton.velocity;
 
-import com.exaroton.bungee.subcommands.StartServer;
-import com.exaroton.bungee.subcommands.StopServer;
+import com.exaroton.velocity.subcommands.StartServer;
+import com.exaroton.velocity.subcommands.StopServer;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.scheduler.Scheduler;

@@ -1,4 +1,4 @@
-package com.exaroton.bungee;
+package com.exaroton.velocity;
 
 import com.exaroton.api.APIException;
 import com.exaroton.api.ExarotonClient;

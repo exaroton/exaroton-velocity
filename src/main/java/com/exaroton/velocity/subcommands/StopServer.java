@@ -1,10 +1,10 @@
-package com.exaroton.bungee.subcommands;
+package com.exaroton.velocity.subcommands;
 
 import com.exaroton.api.APIException;
 import com.exaroton.api.server.Server;
 import com.exaroton.api.server.ServerStatus;
-import com.exaroton.bungee.ExarotonPlugin;
-import com.exaroton.bungee.SubCommand;
+import com.exaroton.velocity.ExarotonPlugin;
+import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
