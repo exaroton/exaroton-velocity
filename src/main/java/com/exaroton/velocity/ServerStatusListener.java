@@ -17,6 +17,8 @@ import java.util.logging.Logger;
 
 public class ServerStatusListener extends ServerStatusSubscriber {
 
+    private final ExarotonPlugin plugin;
+
     /**
      * bungee proxy
      */
@@ -42,9 +44,15 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      */
     private String name;
 
-    public ServerStatusListener(ProxyServer proxy, Logger logger) {
-        this.proxy = proxy;
-        this.logger = logger;
+    /**
+     * server status sender is waiting for
+     */
+    private int expectedStatus;
+
+    public ServerStatusListener(ExarotonPlugin plugin) {
+        this.plugin = plugin;
+        this.proxy = plugin.getProxy();
+        this.logger = plugin.getLogger();
     }
 
     public String getName(Server server) {
@@ -58,9 +66,10 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         return this;
     }
 
-    public ServerStatusListener setSender(CommandSource sender) {
+    public ServerStatusListener setSender(CommandSource sender, int expectedStatus) {
         if (sender != null) {
             this.sender = sender;
+            this.expectedStatus = expectedStatus;
         }
         return this;
     }
@@ -77,16 +86,16 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         String serverName = this.serverInfo == null ? (this.name == null ? newServer.getName() : this.name) : this.serverInfo.getName();
         if (!oldServer.hasStatus(ServerStatus.ONLINE) && newServer.hasStatus(ServerStatus.ONLINE)) {
             if (proxy.getServer(serverName).isPresent()) {
-                this.sendInfo(Message.error("Server "+serverName+" already exists in bungee network"));
+                this.sendInfo(Message.error("Server "+serverName+" already exists in bungee network"), true);
                 return;
             }
-            this.serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getHost(), newServer.getPort()));
+            this.serverInfo = plugin.constructServerInfo(serverName, newServer);
             proxy.registerServer(this.serverInfo);
-            this.sendInfo(Message.statusChange(serverName, true));
+            this.sendInfo(Message.statusChange(serverName, true), expectedStatus == ServerStatus.ONLINE);
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
             proxy.unregisterServer(this.serverInfo);
-            this.sendInfo(Message.statusChange(serverName, false));
+            this.sendInfo(Message.statusChange(serverName, false), expectedStatus == ServerStatus.OFFLINE);
         }
     }
 
@@ -94,12 +103,14 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      * send message to all subscribed sources
      * @param message message
      */
-    public void sendInfo(TextComponent message) {
+    public void sendInfo(TextComponent message, boolean unsubscribe) {
         logger.log(Level.INFO, Message.getFullString(message));
         if (sender != null && !sender.equals(proxy.getConsoleCommandSource())) {
             sender.sendMessage(message);
-            //unsubscribe user from further updates
-            this.sender = null;
+            if (unsubscribe) {
+                //unsubscribe user from further updates
+                this.sender = null;
+            }
         }
     }
 }

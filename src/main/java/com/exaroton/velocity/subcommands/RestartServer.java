@@ -8,25 +8,23 @@ import com.exaroton.velocity.Message;
 import com.exaroton.velocity.ServerStatusListener;
 import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
 import java.util.logging.Level;
 
-public class StartServer extends SubCommand {
+public class RestartServer extends SubCommand {
 
     /**
      * @param plugin exaroton plugin
      */
-    public StartServer(ExarotonPlugin plugin) {
-        super("start", plugin);
+    public RestartServer(ExarotonPlugin plugin) {
+        super("restart", plugin);
     }
 
     @Override
     public void execute(CommandSource sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(Message.usage("start"));
+            sender.sendMessage(Message.usage("restart"));
             return;
         }
 
@@ -37,14 +35,14 @@ public class StartServer extends SubCommand {
                 return;
             }
 
-            if (!server.hasStatus(ServerStatus.OFFLINE)) {
-                sender.sendMessage(Message.SERVER_NOT_OFFLINE);
+            if (!server.hasStatus(ServerStatus.ONLINE)) {
+                sender.sendMessage(Message.SERVER_NOT_ONLINE);
                 return;
             }
 
             ServerStatusListener listener = plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()), ServerStatus.ONLINE);
-            server.start();
-            sender.sendMessage(Message.action("Starting", listener.getName(server)));
+            server.restart();
+            sender.sendMessage(Message.action("Restarting", listener.getName(server)));
         } catch (APIException e) {
             logger.log(Level.SEVERE, "An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
@@ -53,11 +51,11 @@ public class StartServer extends SubCommand {
 
     @Override
     public List<String> onTabComplete(CommandSource sender, String[] args) {
-        return plugin.serverCompletions(args[0], ServerStatus.OFFLINE);
+        return plugin.serverCompletions(args[0], ServerStatus.ONLINE);
     }
 
     @Override
     public String getPermission() {
-        return "exaroton.start";
+        return "exaroton.stop";
     }
 }

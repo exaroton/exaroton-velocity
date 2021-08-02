@@ -42,7 +42,7 @@ public class StopServer extends SubCommand {
                 return;
             }
 
-            ServerStatusListener listener = plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()));
+            ServerStatusListener listener = plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()), ServerStatus.OFFLINE);
             server.stop();
             sender.sendMessage(Message.action("Stopping", listener.getName(server)));
         } catch (APIException e) {
