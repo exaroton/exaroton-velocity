@@ -29,7 +29,7 @@ public class StartServer extends SubCommand {
         }
 
         try {
-            Server server = plugin.findServer(args[0]);
+            Server server = plugin.findServer(args[0], true);
             if (server == null) {
                 sender.sendMessage(Component.text("Server not found!").color(NamedTextColor.RED));
                 return;

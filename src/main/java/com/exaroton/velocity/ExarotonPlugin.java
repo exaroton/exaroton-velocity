@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -177,11 +178,12 @@ public class ExarotonPlugin {
      * find a server
      * if a server can't be uniquely identified then the id will be preferred
      * @param query server name, address or id
+     * @param force skip cache
      * @return found server or null
      * @throws APIException exceptions from the API
      */
-    public Server findServer(String query) throws APIException {
-        Server[] servers = fetchServers();
+    public Server findServer(String query, boolean force) throws APIException {
+        Server[] servers = serverCache != null && !force ? serverCache : fetchServers();
 
         servers = Arrays.stream(servers)
                 .filter(server -> matchExact(server, query))
@@ -294,12 +296,14 @@ public class ExarotonPlugin {
     public void watchServers(){
         for (RegisteredServer registeredServer: proxy.getAllServers()) {
             String address = registeredServer.getServerInfo().getAddress().getHostName();
-            address = address.replaceAll(":\\d+$", "");
-            if (address.endsWith(".exaroton.me")) {
+            if (address.matches(".*\\.exaroton\\.me(:\\d+)?")) {
                 logger.info("Found exaroton server: " + address + ", start watching status changes");
                 try {
-                    Server server = this.findServer(address);
-                    if (!server.hasStatus(ServerStatus.ONLINE)) {
+                    Server server = this.findServer(address, false);
+                    if (server.hasStatus(ServerStatus.ONLINE)) {
+                        proxy.unregisterServer(registeredServer.getServerInfo());
+                        proxy.registerServer(constructServerInfo(registeredServer.getServerInfo().getName(), server));
+                    } else {
                         proxy.unregisterServer(registeredServer.getServerInfo());
                         logger.info("Server " + address + " is offline, removed it from the server list!");
                     }
@@ -312,13 +316,23 @@ public class ExarotonPlugin {
     }
 
     /**
+     * generate server info
+     * @param name server name
+     * @param server exaroton server
+     * @return server info
+     */
+    public ServerInfo constructServerInfo(String name, Server server) {
+        return new ServerInfo(name, new InetSocketAddress(server.getHost(), server.getPort()));
+    }
+
+    /**
      * automatically start servers from the config (asynchronous)
      */
     public void autoStartServers() {
         if (!config.getBoolean("auto-start.enabled", false)) return;
         for (String query: config.<String>getList("auto-start.servers")) {
             try {
-                Server server = this.findServer(query);
+                Server server = this.findServer(query, false);
 
                 if (server == null) {
                     logger.log(Level.WARNING, "Can't start " + query + ": Server not found");
