@@ -403,6 +403,7 @@ public class ExarotonPlugin {
     }
 
     public void updateServer(Server server) {
+        if (serverCache == null) return;
         int index = 0;
         for (; index < serverCache.length; index++) {
             if (serverCache[index].getId().equals(server.getId())) break;
