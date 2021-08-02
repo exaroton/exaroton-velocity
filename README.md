@@ -11,9 +11,9 @@ This plugin can be used on proxies that don't run on exaroton as well.
 
 ### Start/Stop commands
 Start a server and automatically add it to the network
-when it goes online with `/exaroton start <server>`
-
-To stop a server and remove it use `/exaroton stop`
+when it goes online with `/exaroton start <server>`.
+To stop a server and remove it use `/exaroton stop`.
+Restarting a server is possible with `/exaroton restart`.
 
 The commands require the permission nodes `exaroton.start` and
 `exaroton.stop` respectively.

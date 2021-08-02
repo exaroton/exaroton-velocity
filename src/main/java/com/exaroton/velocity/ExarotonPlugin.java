@@ -401,4 +401,14 @@ public class ExarotonPlugin {
         }
         return null;
     }
+
+    public void updateServer(Server server) {
+        int index = 0;
+        for (; index < serverCache.length; index++) {
+            if (serverCache[index].getId().equals(server.getId())) break;
+        }
+        if (index < serverCache.length) {
+            serverCache[index] = server;
+        }
+    }
 }

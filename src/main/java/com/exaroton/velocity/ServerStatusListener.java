@@ -5,6 +5,7 @@ import com.exaroton.api.server.ServerStatus;
 import com.exaroton.api.ws.subscriber.ServerStatusSubscriber;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -12,6 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -83,10 +85,11 @@ public class ServerStatusListener extends ServerStatusSubscriber {
 
     @Override
     public void statusUpdate(Server oldServer, Server newServer) {
+        plugin.updateServer(newServer);
         String serverName = this.serverInfo == null ? (this.name == null ? newServer.getName() : this.name) : this.serverInfo.getName();
         if (!oldServer.hasStatus(ServerStatus.ONLINE) && newServer.hasStatus(ServerStatus.ONLINE)) {
             if (proxy.getServer(serverName).isPresent()) {
-                this.sendInfo(Message.error("Server "+serverName+" already exists in bungee network"), true);
+                this.sendInfo(Message.error("Server "+serverName+" already exists in velocity network"), true);
                 return;
             }
             this.serverInfo = plugin.constructServerInfo(serverName, newServer);
@@ -94,7 +97,12 @@ public class ServerStatusListener extends ServerStatusSubscriber {
             this.sendInfo(Message.statusChange(serverName, true), expectedStatus == ServerStatus.ONLINE);
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
-            proxy.unregisterServer(this.serverInfo);
+            Optional<RegisteredServer> registeredServer = this.proxy.getServer(serverName);
+            if (registeredServer.isEmpty()) {
+                this.sendInfo(Message.error("Server " + serverName + " is not registered in velocity network!"), true);
+                return;
+            }
+            proxy.unregisterServer(registeredServer.get().getServerInfo());
             this.sendInfo(Message.statusChange(serverName, false), expectedStatus == ServerStatus.OFFLINE);
         }
     }

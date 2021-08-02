@@ -64,7 +64,7 @@ public class Message {
                 .append(Component.text(name).color(NamedTextColor.GREEN))
                 .append(Component.text(" went "))
                 .append(Component.text(online ? "online" : "offline").color(online ? NamedTextColor.GREEN : NamedTextColor.RED))
-                .append(Component.text("..."))).getComponent();
+                .append(Component.text("."))).getComponent();
     }
 
     /**

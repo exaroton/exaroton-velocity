@@ -1,5 +1,6 @@
 package com.exaroton.velocity;
 
+import com.exaroton.velocity.subcommands.RestartServer;
 import com.exaroton.velocity.subcommands.StartServer;
 import com.exaroton.velocity.subcommands.StopServer;
 import com.velocitypowered.api.command.CommandSource;
@@ -44,6 +45,7 @@ public class ExarotonCommand implements SimpleCommand {
     private void loadCommands() {
         this.registerCommand(new StartServer(plugin));
         this.registerCommand(new StopServer(plugin));
+        this.registerCommand(new RestartServer(plugin));
     }
 
     /**
