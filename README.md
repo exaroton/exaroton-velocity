@@ -4,7 +4,7 @@ This plugin can be used on proxies that don't run on exaroton as well.
 
 ## Setup
 1. Install the plugin and start the server
-2. Add the API token in the config.yml
+2. Add the API token in the config.toml
 3. Restart the proxy
 
 ## Features

@@ -4,6 +4,8 @@ import com.exaroton.api.APIException;
 import com.exaroton.api.server.Server;
 import com.exaroton.api.server.ServerStatus;
 import com.exaroton.velocity.ExarotonPlugin;
+import com.exaroton.velocity.Message;
+import com.exaroton.velocity.ServerStatusListener;
 import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
 import net.kyori.adventure.text.Component;
@@ -24,29 +26,28 @@ public class StartServer extends SubCommand {
     @Override
     public void execute(CommandSource sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(Component.text("Usage: /exaroton start <server>").color(NamedTextColor.RED));
+            sender.sendMessage(Message.usage("start"));
             return;
         }
 
         try {
             Server server = plugin.findServer(args[0], true);
             if (server == null) {
-                sender.sendMessage(Component.text("Server not found!").color(NamedTextColor.RED));
+                sender.sendMessage(Message.SERVER_NOT_FOUND);
                 return;
             }
 
             if (!server.hasStatus(ServerStatus.OFFLINE)) {
-                sender.sendMessage(Component.text("Server is not offline!").color(NamedTextColor.RED));
+                sender.sendMessage(Message.SERVER_NOT_OFFLINE);
                 return;
             }
 
-            plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()));
+            ServerStatusListener listener = plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()));
             server.start();
-
-            sender.sendMessage(Component.text("Starting server...").color(NamedTextColor.WHITE));
+            sender.sendMessage(Message.action("Starting", listener.getName(server)));
         } catch (APIException e) {
             logger.log(Level.SEVERE, "An API Error occurred!", e);
-            sender.sendMessage(Component.text("An API Error occurred. Check your log for more Info!").color(NamedTextColor.RED));
+            sender.sendMessage(Message.API_ERROR);
         }
     }
 

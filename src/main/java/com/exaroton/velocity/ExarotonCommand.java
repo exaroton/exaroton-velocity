@@ -60,18 +60,18 @@ public class ExarotonCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length == 0) {
-            sender.sendMessage(Component.text(this.getUsage()).color(NamedTextColor.RED));
+            sender.sendMessage(this.getUsage());
             return;
         }
 
         SubCommand command = this.subCommands.get(args[0]);
         if (command == null) {
-            sender.sendMessage(Component.text("Unknown sub-command").color(NamedTextColor.RED));
+            sender.sendMessage(Message.error("Unknown sub-command."));
             return;
         }
 
         if (command.getPermission() != null && !sender.hasPermission(command.getPermission())) {
-            sender.sendMessage(Component.text("You don't have the required permissions to execute this command!").color(NamedTextColor.RED));
+            sender.sendMessage(Message.error("You don't have the required permissions to execute this command!"));
             return;
         }
 
@@ -82,15 +82,9 @@ public class ExarotonCommand implements SimpleCommand {
      * get list of available subcommands
      * @return command usage
      */
-    private String getUsage() {
-        String response;
-        if (subCommands.size() == 0) {
-            response = "No sub commands registered!";
-        }
-        else {
-            response = "Valid sub-commands:\n "+ String.join("\n", subCommands.keySet());
-        }
-        return response;
+    private Component getUsage() {
+        return (subCommands.size() == 0 ? Message.error("No sub-commands registered.") :
+                Message.subCommandList(subCommands.keySet().toArray(new String[1])));
     }
 
     @Override

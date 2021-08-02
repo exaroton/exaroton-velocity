@@ -260,14 +260,12 @@ public class ExarotonPlugin {
      * @param sender command sender to update
      * @param info velocity server info
      */
-    public void listenToStatus(Server server, CommandSource sender, ServerInfo info, String name) {
-        logger.log(Level.INFO, "Listening to status" + info);
+    public ServerStatusListener listenToStatus(Server server, CommandSource sender, ServerInfo info, String name) {
         if (statusListeners.containsKey(server.getId())) {
-            statusListeners.get(server.getId())
+            return statusListeners.get(server.getId())
                     .setSender(sender)
                     .setServerInfo(info)
                     .setName(name);
-            return;
         }
         server.subscribe();
         ServerStatusListener listener = new ServerStatusListener(this.getProxy(), this.getLogger())
@@ -276,6 +274,7 @@ public class ExarotonPlugin {
                 .setName(name);
         server.addStatusSubscriber(listener);
         statusListeners.put(server.getId(), listener);
+        return listener;
     }
 
     /**
@@ -339,9 +338,21 @@ public class ExarotonPlugin {
                     continue;
                 }
 
-                if (server.hasStatus(new int[]{ServerStatus.ONLINE, ServerStatus.STARTING,
+                if (server.hasStatus(ServerStatus.ONLINE)) {
+                    String name = findServerName(server.getAddress());
+                    if (name == null) {
+                        logger.log(Level.INFO, server.getAddress() + " is already online, adding it to proxy!");
+                        this.getProxy().registerServer(this.constructServerInfo(server.getName(), server));
+                    } else {
+                        logger.log(Level.INFO, server.getAddress() + " is already online!");
+                    }
+                    this.listenToStatus(server, null, null, name);
+                    return;
+                }
+
+                if (server.hasStatus(new int[]{ServerStatus.STARTING,
                         ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING})) {
-                    logger.log(Level.INFO, server.getAddress() + " is already online or starting!");
+                    logger.log(Level.INFO, server.getAddress() + " is already starting!");
                     this.listenToStatus(server, null, null, findServerName(server.getAddress()));
                     return;
                 }

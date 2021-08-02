@@ -7,6 +7,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
@@ -46,6 +47,10 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         this.logger = logger;
     }
 
+    public String getName(Server server) {
+        return this.name != null ? this.name : server.getName();
+    }
+
     public ServerStatusListener setServerInfo(ServerInfo serverInfo) {
         if (serverInfo != null) {
             this.serverInfo = serverInfo;
@@ -72,16 +77,16 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         String serverName = this.serverInfo == null ? (this.name == null ? newServer.getName() : this.name) : this.serverInfo.getName();
         if (!oldServer.hasStatus(ServerStatus.ONLINE) && newServer.hasStatus(ServerStatus.ONLINE)) {
             if (proxy.getServer(serverName).isPresent()) {
-                this.sendInfo("Server "+serverName+" already exists in bungee network", NamedTextColor.RED);
+                this.sendInfo(Message.error("Server "+serverName+" already exists in bungee network"));
                 return;
             }
             this.serverInfo = new ServerInfo(serverName, new InetSocketAddress(newServer.getHost(), newServer.getPort()));
             proxy.registerServer(this.serverInfo);
-            this.sendInfo("[exaroton] " + newServer.getAddress() + " went online!", NamedTextColor.GREEN);
+            this.sendInfo(Message.statusChange(serverName, true));
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
             proxy.unregisterServer(this.serverInfo);
-            this.sendInfo("[exaroton] " + newServer.getAddress() + " is no longer online!", NamedTextColor.RED);
+            this.sendInfo(Message.statusChange(serverName, false));
         }
     }
 
@@ -89,11 +94,10 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      * send message to all subscribed sources
      * @param message message
      */
-    public void sendInfo(String message, TextColor color) {
-        Component text = Component.text(message).color(color);
-        logger.log(Level.INFO, message);
+    public void sendInfo(TextComponent message) {
+        logger.log(Level.INFO, Message.getFullString(message));
         if (sender != null && !sender.equals(proxy.getConsoleCommandSource())) {
-            sender.sendMessage(text);
+            sender.sendMessage(message);
             //unsubscribe user from further updates
             this.sender = null;
         }
