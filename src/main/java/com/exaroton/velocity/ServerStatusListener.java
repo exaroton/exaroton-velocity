@@ -98,7 +98,7 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
             Optional<RegisteredServer> registeredServer = this.proxy.getServer(serverName);
-            if (registeredServer.isEmpty()) {
+            if (!registeredServer.isPresent()) {
                 this.sendInfo(Message.error("Server " + serverName + " is not registered in velocity network!"), true);
                 return;
             }
