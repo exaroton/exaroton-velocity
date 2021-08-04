@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Plugin(id = "exaroton", name = "exaroton", version = "1.0.0", description = "Manage exaroton servers in your velocity proxy", authors = {"Aternos GmbH"})
 public class ExarotonPlugin {
@@ -183,10 +185,14 @@ public class ExarotonPlugin {
      * @throws APIException exceptions from the API
      */
     public Server findServer(String query, boolean force) throws APIException {
+        if (this.getProxy().getConfiguration().getServers().containsKey(query)) {
+            query = this.getProxy().getConfiguration().getServers().get(query);
+        }
+        final String finalQuery = query;
         Server[] servers = serverCache != null && !force ? serverCache : fetchServers();
 
         servers = Arrays.stream(servers)
-                .filter(server -> matchExact(server, query))
+                .filter(server -> matchExact(server, finalQuery))
                 .toArray(Server[]::new);
 
         switch (servers.length) {
@@ -197,7 +203,7 @@ public class ExarotonPlugin {
                 return servers[0];
 
             default:
-                Optional<Server> server = Arrays.stream(servers).filter(s -> s.getId().equals(query)).findFirst();
+                Optional<Server> server = Arrays.stream(servers).filter(s -> s.getId().equals(finalQuery)).findFirst();
                 return server.orElse(servers[0]);
         }
     }
@@ -223,32 +229,69 @@ public class ExarotonPlugin {
     }
 
     /**
+     * @return get server cache (request if necessary)
+     */
+    public Server[] getServerCache() throws APIException {
+        if (serverCache == null) {
+            this.fetchServers();
+        }
+        return serverCache;
+    }
+
+    /**
+     * @param servers server list
+     * @param status status code
+     * @return severs that have the requested status
+     */
+    public Stream<Server> findWithStatus(Stream<Server> servers, int status) {
+        return servers.filter(server -> server.hasStatus(status));
+    }
+
+    public Stream<Server> findWithQuery(Stream<Server> servers, String query) {
+        return servers.filter(server -> matchBeginning(server, query));
+    }
+
+    public List<String> getAllNames(Server[] servers) {
+        List<String> result = new ArrayList<>();
+
+        for (Server server : servers) {
+            result.add(server.getName());
+        }
+        for (Server server : servers) {
+            result.add(server.getAddress());
+        }
+        for (Server server : servers) {
+            result.add(server.getId());
+        }
+
+        return result;
+    }
+
+    /**
      * find auto completions by a query and status
      * @param query partial server name, address or ID
      * @param status server status
      * @return all matching server names, addresses and IDs
      */
     public List<String> serverCompletions(String query, int status) {
-        if (serverCache == null) {
-            try {
-                this.fetchServers();
-            } catch (APIException e) {
-                logger.log(Level.SEVERE, "Failed to load completions", e);
-                return new ArrayList<>();
-            }
+        Stream<Server> servers;
+        try {
+            servers = Arrays.stream(getServerCache());
         }
-        Server[] matching = Arrays.stream(serverCache).filter(server -> matchBeginning(server, query) && server.hasStatus(status)).toArray(Server[]::new);
-        ArrayList<String> result = new ArrayList<>();
+        catch (APIException exception) {
+            logger.log(Level.SEVERE, "Failed to access API", exception);
+            return new ArrayList<>();
+        }
+        servers = findWithStatus(servers, status);
+        servers = findWithQuery(servers, query);
+        Server[] matching = servers.toArray(Server[]::new);
 
-        for (Server server: matching) {
-            result.add(server.getName());
-        }
-        for (Server server: matching) {
-            result.add(server.getAddress());
-        }
-        for (Server server: matching) {
-            result.add(server.getId());
-        }
+        List<String> result = this.getProxy().getAllServers().stream()
+                .map(s -> s.getServerInfo().getName())
+                .filter(s -> s.startsWith(query))
+                .collect(Collectors.toList());
+
+        result.addAll(getAllNames(matching));
 
         return result;
     }

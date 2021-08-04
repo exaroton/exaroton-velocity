@@ -52,7 +52,7 @@ public class Message {
     public static TextComponent action(String action, String name) {
         return new Message(Component.text(action + " server ")
                         .append(Component.text(name).color(NamedTextColor.GREEN))
-                        .append(Component.text("...").color(NamedTextColor.GRAY))).getComponent();
+                        .append(Component.text(".").color(NamedTextColor.GRAY))).getComponent();
     }
 
     /**
