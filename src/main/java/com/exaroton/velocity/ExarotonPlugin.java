@@ -298,9 +298,13 @@ public class ExarotonPlugin {
         for (RegisteredServer registeredServer: proxy.getAllServers()) {
             String address = registeredServer.getServerInfo().getAddress().getHostName();
             if (address.matches(".*\\.exaroton\\.me(:\\d+)?")) {
-                logger.info("Found exaroton server: " + address + ", start watching status changes");
                 try {
                     Server server = this.findServer(address, false);
+                    if (server == null) {
+                        logger.warning("Can't find server " + address + ". Unable to watch status changes");
+                        return;
+                    }
+                    logger.info("Found exaroton server: " + address + ". Starting to watch status changes");
                     if (server.hasStatus(ServerStatus.ONLINE)) {
                         proxy.unregisterServer(registeredServer.getServerInfo());
                         proxy.registerServer(constructServerInfo(registeredServer.getServerInfo().getName(), server));
