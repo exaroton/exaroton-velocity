@@ -296,6 +296,23 @@ public class ExarotonPlugin {
         return result;
     }
 
+    public List<String> serverCompletionsNotInProxy(String query) {
+        Stream<Server> servers;
+        try {
+            servers = Arrays.stream(getServerCache());
+        } catch (APIException exception) {
+            logger.log(Level.SEVERE, "Failed to access API", exception);
+            return new ArrayList<>();
+        }
+        servers = findWithQuery(servers, query);
+        servers = servers.filter(s -> {
+            String name = findServerName(s.getAddress());
+            return !this.getProxy().getServer(name == null ? s.getName() : name).isPresent();
+        });
+
+        return getAllNames(servers.toArray(Server[]::new));
+    }
+
     /**
      * listen to server status
      * if there already is a status listener then add the sender and/or name
@@ -442,7 +459,7 @@ public class ExarotonPlugin {
      */
     public String findServerName(String address) {
         for (Map.Entry<String, String> entry : proxy.getConfiguration().getServers().entrySet()) {
-            if (entry.getValue().matches(Pattern.quote(address) + ":\\d+")) {
+            if (entry.getValue().matches(Pattern.quote(address) + "(:\\d+)?")) {
                 return entry.getKey();
             }
         }

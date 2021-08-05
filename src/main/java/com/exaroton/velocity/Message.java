@@ -56,6 +56,39 @@ public class Message {
     }
 
     /**
+     * show that a server has been added to the proxy
+     * @param name server name
+     */
+    public static Message added(String name) {
+        return new Message(Component.text("Added server ")
+                .append(Component.text(name).color(NamedTextColor.GREEN))
+                .append(Component.text(" to the proxy."))
+        );
+    }
+
+    /**
+     * show that a server has been removed from the proxy
+     * @param name server name
+     */
+    public static Message removed(String name) {
+        return new Message(Component.text("Removed server ")
+                .append(Component.text(name).color(NamedTextColor.GREEN))
+                .append(Component.text(" from the proxy. No longer watching status updates."))
+        );
+    }
+
+    /**
+     * show that a server's status is being watched
+     * @param name server name
+     */
+    public static Message watching(String name) {
+        return new Message(Component.text("Watching status updates for ")
+                .append(Component.text(name).color(NamedTextColor.GREEN))
+                .append(Component.text("."))
+        );
+    }
+
+    /**
      * @param name server name
      * @param online is server online
      */
