@@ -1,9 +1,6 @@
 package com.exaroton.velocity;
 
-import com.exaroton.velocity.subcommands.AddServer;
-import com.exaroton.velocity.subcommands.RestartServer;
-import com.exaroton.velocity.subcommands.StartServer;
-import com.exaroton.velocity.subcommands.StopServer;
+import com.exaroton.velocity.subcommands.*;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.scheduler.Scheduler;
@@ -48,6 +45,7 @@ public class ExarotonCommand implements SimpleCommand {
         this.registerCommand(new StopServer(plugin));
         this.registerCommand(new RestartServer(plugin));
         this.registerCommand(new AddServer(plugin));
+        this.registerCommand(new RemoveServer(plugin));
     }
 
     /**
@@ -88,7 +86,7 @@ public class ExarotonCommand implements SimpleCommand {
      */
     private Component getUsage() {
         return (subCommands.size() == 0 ? Message.error("No sub-commands registered.") :
-                Message.subCommandList(subCommands.keySet().toArray(new String[1])));
+                Message.subCommandList(subCommands.values()));
     }
 
     @Override

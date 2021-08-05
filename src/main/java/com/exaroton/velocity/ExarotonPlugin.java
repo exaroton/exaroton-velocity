@@ -330,13 +330,25 @@ public class ExarotonPlugin {
                     .setName(name);
         }
         server.subscribe();
-        ServerStatusListener listener = new ServerStatusListener(this)
+        ServerStatusListener listener = new ServerStatusListener(this, server)
                 .setSender(sender, expectedStatus)
                 .setServerInfo(info)
                 .setName(name);
         server.addStatusSubscriber(listener);
         statusListeners.put(server.getId(), listener);
         return listener;
+    }
+
+    /**
+     * stop listening to server status
+     * @param serverId ID of the server to unsubscribe from
+     */
+    public void stopListeningToStatus(String serverId) {
+        if (!this.statusListeners.containsKey(serverId)) {
+            return;
+        }
+        this.statusListeners.get(serverId).unsubscribe();
+        this.statusListeners.remove(serverId);
     }
 
     /**

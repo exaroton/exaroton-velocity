@@ -13,6 +13,11 @@ public abstract class SubCommand {
     private final String name;
 
     /**
+     * sub-command description
+     */
+    private final String description;
+
+    /**
      * plugin
      */
     protected final ExarotonPlugin plugin;
@@ -25,11 +30,17 @@ public abstract class SubCommand {
     /**
      * @param plugin exaroton plugin
      */
-    public SubCommand(String name, ExarotonPlugin plugin) {
+    public SubCommand(String name, String description,  ExarotonPlugin plugin) {
         if (name == null || name.length() == 0) {
             throw new IllegalArgumentException("Invalid sub-command name!");
         }
         this.name = name;
+
+        if (description == null || description.length() == 0) {
+            throw new IllegalArgumentException("Invalid sub-command description!");
+        }
+        this.description = description;
+
         if (plugin == null) {
             throw new IllegalArgumentException("Invalid plugin!");
         }
@@ -44,6 +55,15 @@ public abstract class SubCommand {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * get the sub-command description
+     *
+     * @return sub-command description
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**

@@ -51,10 +51,13 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      */
     private int expectedStatus;
 
-    public ServerStatusListener(ExarotonPlugin plugin) {
+    private final Server server;
+
+    public ServerStatusListener(ExarotonPlugin plugin, Server server) {
         this.plugin = plugin;
         this.proxy = plugin.getProxy();
         this.logger = plugin.getLogger();
+        this.server = server;
     }
 
     public String getName(Server server) {
@@ -120,5 +123,12 @@ public class ServerStatusListener extends ServerStatusSubscriber {
                 this.sender = null;
             }
         }
+    }
+
+    /**
+     * unsubscribe from this server
+     */
+    public void unsubscribe() {
+        this.server.unsubscribe();
     }
 }

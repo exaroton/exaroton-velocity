@@ -1,9 +1,12 @@
 package com.exaroton.velocity;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 public class Message {
@@ -104,13 +107,18 @@ public class Message {
      * list sub-commands
      * @param subcommands sub-command names
      */
-    public static TextComponent subCommandList(String[] subcommands) {
+    public static TextComponent subCommandList(Collection<SubCommand> subcommands) {
+        Iterator<SubCommand> iterator = subcommands.iterator();
         TextComponent text = Component.text("Available sub-commands:\n").color(NamedTextColor.GRAY);
-        for (int i = 0; i < subcommands.length; i++) {
-            System.out.println(subcommands[i]);
-            text = text.append(Component.text("- ").color(NamedTextColor.GRAY))
-                    .append(Component.text(subcommands[i]).color(NamedTextColor.GREEN));
-            if (i < subcommands.length - 1) {
+        while (iterator.hasNext()) {
+            SubCommand subCommand = iterator.next();
+            text = text
+                    .append(Component.text("- ").color(NamedTextColor.GRAY))
+                    .append(Component.text(subCommand.getName()).color(NamedTextColor.GREEN))
+                    .append(Component.text(": ").color(NamedTextColor.GREEN))
+                    .append(Component.text(subCommand.getDescription()));
+
+            if (iterator.hasNext()) {
                 text = text.append(Component.newline());
             }
         }
