@@ -15,8 +15,12 @@ when it goes online with `/exaroton start <server>`.
 To stop a server and remove it use `/exaroton stop`.
 Restarting a server is possible with `/exaroton restart`.
 
-The commands require the permission nodes `exaroton.start` and
-`exaroton.stop` respectively.
+To start watching a server, or to add a server that is already online
+use `/exaroton add`. To remove a server from the proxy and stop watching
+it use `/exaroton remove`. 
+
+The commands require the permission nodes `exaroton.<subcommand>` e.g.
+`exaroton.stop`.
 
 ### Watch servers
 Automatically remove offline servers in registered in velocity
