@@ -317,8 +317,8 @@ public class ExarotonPlugin {
         }
         servers = findWithQuery(servers, query);
         servers = servers.filter(s -> {
-            String name = findServerName(s.getAddress());
-            return !this.getProxy().getServer(name == null ? s.getName() : name).isPresent();
+            String name = findServerName(s.getAddress(), s.getName());
+            return !this.getProxy().getServer(name).isPresent();
         });
 
         return getAllNames(servers.toArray(Server[]::new));
@@ -428,7 +428,7 @@ public class ExarotonPlugin {
                 }
 
                 if (server.hasStatus(ServerStatus.ONLINE)) {
-                    String name = findServerName(server.getAddress());
+                    String name = findServerName(server.getAddress(), server.getName());
                     if (name == null) {
                         logger.log(Level.INFO, server.getAddress() + " is already online, adding it to proxy!");
                         this.getProxy().registerServer(this.constructServerInfo(server.getName(), server));
