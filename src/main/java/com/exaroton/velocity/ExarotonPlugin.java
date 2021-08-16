@@ -10,6 +10,7 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -24,6 +25,9 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,6 +86,13 @@ public class ExarotonPlugin {
         if (this.config != null && this.createExarotonClient()) {
             this.registerCommands();
             this.runAsyncTasks();
+        }
+    }
+
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        if (this.exarotonClient != null) {
+            this.autoStopServers();
         }
     }
 
@@ -470,12 +481,22 @@ public class ExarotonPlugin {
      * @return server name e.g. lobby
      */
     public String findServerName(String address) {
+        return findServerName(address, null);
+    }
+
+    /**
+     * try to find the server name in the velocity config
+     * @param address exaroton address e.g. example.exaroton.com
+     * @param fallback fallback name e.g. example
+     * @return server name e.g. lobby
+     */
+    public String findServerName(String address, String fallback) {
         for (Map.Entry<String, String> entry : proxy.getConfiguration().getServers().entrySet()) {
             if (entry.getValue().matches(Pattern.quote(address) + "(:\\d+)?")) {
                 return entry.getKey();
             }
         }
-        return null;
+        return fallback;
     }
 
     public void updateServer(Server server) {
@@ -487,5 +508,62 @@ public class ExarotonPlugin {
         if (index < serverCache.length) {
             serverCache[index] = server;
         }
+    }
+
+    /**
+     * automatically stop servers from the config
+     */
+    public void autoStopServers() {
+        if (!config.getBoolean("auto-stop.enabled")) return;
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        ArrayList<Callable<Object>> stopping = new ArrayList<>();
+
+        for (String query : config.<String>getList("auto-stop.servers")) {
+            try {
+                Server server = this.findServer(query, false);
+
+                if (server == null) {
+                    logger.log(Level.WARNING, "Can't stop " + query + ": Server not found");
+                    continue;
+                }
+
+                String name = findServerName(server.getAddress(), server.getName());
+                if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
+                    logger.log(Level.INFO, name + " is already offline!");
+                    continue;
+                }
+
+                if (server.hasStatus(new int[]{ServerStatus.SAVING, ServerStatus.STOPPING})) {
+                    logger.log(Level.INFO, name + " is already stopping!");
+                    continue;
+                }
+
+                if (!server.hasStatus(ServerStatus.ONLINE)) {
+                    logger.log(Level.SEVERE, "Can't stop " + name + ": Server isn't online.");
+                    continue;
+                }
+
+                logger.log(Level.INFO, "Stopping " + name);
+                stopping.add(() -> {
+                    server.stop();
+                    return null;
+                });
+            } catch (APIException e) {
+                logger.log(Level.SEVERE, "Failed to stop " + query + "!", e);
+            }
+        }
+        if (stopping.size() == 0)
+            return;
+
+        try {
+            executor.invokeAll(stopping);
+        } catch (InterruptedException e) {
+            logger.log(Level.SEVERE, "Failed to stop servers", e);
+            return;
+        }
+
+        int count = stopping.size();
+        logger.info("Successfully stopped " + count + " server" + (count == 1 ? "" : "s") + "!");
     }
 }

@@ -11,3 +11,10 @@ watch-servers = true
     servers = [
         "example.exaroton.me"
     ]
+
+# Automatically stop servers when the proxy stops
+[auto-stop]
+    enabled = false
+    servers = [
+        "example.exaroton.me"
+    ]
