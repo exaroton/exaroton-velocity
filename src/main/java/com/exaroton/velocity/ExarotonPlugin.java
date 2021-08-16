@@ -425,14 +425,14 @@ public class ExarotonPlugin {
                         logger.log(Level.INFO, server.getAddress() + " is already online!");
                     }
                     this.listenToStatus(server, null, null, name, -1);
-                    return;
+                    continue;
                 }
 
                 if (server.hasStatus(new int[]{ServerStatus.STARTING,
                         ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING})) {
                     logger.log(Level.INFO, server.getAddress() + " is already starting!");
                     this.listenToStatus(server, null, null, findServerName(server.getAddress()), -1);
-                    return;
+                    continue;
                 }
 
                 if (!server.hasStatus(ServerStatus.OFFLINE)) {
@@ -445,7 +445,7 @@ public class ExarotonPlugin {
                 server.start();
 
             } catch (APIException e) {
-                logger.log(Level.SEVERE, "Failed to start start "+ query +"!", e);
+                logger.log(Level.SEVERE, "Failed to start "+ query +"!", e);
             }
         }
     }
