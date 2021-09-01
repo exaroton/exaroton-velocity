@@ -79,6 +79,7 @@ public class ExarotonPlugin {
         catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to load config file!", e);
         }
+        ExarotonPluginAPI.setPlugin(this);
     }
 
     @Subscribe
@@ -322,6 +323,16 @@ public class ExarotonPlugin {
         });
 
         return getAllNames(servers.toArray(Server[]::new));
+    }
+
+    /**
+     * listen to server status
+     * if there already is a status listener then add the sender and/or name
+     * @param server         server to subscribe to
+     * @param name           server name in bungee server list
+     */
+    public ServerStatusListener listenToStatus(Server server, ServerInfo info, String name) {
+        return this.listenToStatus(server, null, info , name, -1);
     }
 
     /**
