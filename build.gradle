@@ -25,3 +25,15 @@ dependencies {
 shadowJar {
     archiveClassifier.set('')
 }
+
+task copyPlugin {
+    exec {
+        executable "cp"
+        args = [
+                "./build/libs/${rootProject.name}-${rootProject.version}.jar",
+                "./run/plugins/${rootProject.name}-dev.jar"
+        ]
+    }
+}
+
+shadowJar.finalizedBy("copyPlugin")
