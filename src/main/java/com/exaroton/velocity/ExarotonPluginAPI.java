@@ -3,10 +3,13 @@ package com.exaroton.velocity;
 import com.exaroton.api.APIException;
 import com.exaroton.api.server.Server;
 import com.exaroton.api.server.ServerStatus;
+import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class ExarotonPluginAPI {
 
@@ -140,6 +143,46 @@ public class ExarotonPluginAPI {
 
         plugin.stopListeningToStatus(server.getId());
     }
+
+    /**
+     * send this player to this server
+     * start the server or add it to the network if necessary
+     * @param player player to move
+     * @param server server to move to
+     * @throws APIException exception starting the server
+     * @throws InterruptedException interrupted while
+     * @return connection request
+     */
+    public static CompletableFuture<ConnectionRequestBuilder.Result> switchServer(Player player, Server server) throws APIException, InterruptedException {
+        if (server == null) {
+            throw new NullPointerException("No server provided!");
+        }
+
+        if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED, ServerStatus.LOADING, ServerStatus.STARTING, ServerStatus.PREPARING})) {
+            ServerStatusListener listener = watchServer(server);
+            if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
+                server.start();
+            }
+            try {
+                server = listener.waitForStatus(ServerStatus.ONLINE).get();
+            } catch (ExecutionException e) {
+                throw new RuntimeException("Failed to start server", e);
+            }
+        }
+
+        return movePlayer(player, server);
+    }
+
+    private static CompletableFuture<ConnectionRequestBuilder.Result> movePlayer(Player player, Server server) {
+        String name = plugin.findServerName(server.getAddress(), server.getName());
+
+        // add to proxy if needed
+        if (!plugin.getProxy().getServer(name).isPresent()) {
+            plugin.getProxy().registerServer(plugin.constructServerInfo(name, server));
+        }
+        return player.createConnectionRequest(plugin.getProxy().getServer(name).get()).connect();
+    }
+
 
     static void setPlugin(ExarotonPlugin plugin) {
         ExarotonPluginAPI.plugin = plugin;

@@ -285,7 +285,7 @@ public class ExarotonPlugin {
      * @param status server status
      * @return all matching server names, addresses and IDs
      */
-    public List<String> serverCompletions(String query, int status) {
+    public List<String> serverCompletions(String query, Integer status) {
         Stream<Server> servers;
         try {
             servers = Arrays.stream(getServerCache());
@@ -294,7 +294,8 @@ public class ExarotonPlugin {
             logger.log(Level.SEVERE, "Failed to access API", exception);
             return new ArrayList<>();
         }
-        servers = findWithStatus(servers, status);
+        if (status != null)
+            servers = findWithStatus(servers, status);
         servers = findWithQuery(servers, query);
         Server[] matching = servers.toArray(Server[]::new);
 

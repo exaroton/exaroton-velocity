@@ -13,7 +13,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
 import java.net.InetSocketAddress;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,6 +54,8 @@ public class ServerStatusListener extends ServerStatusSubscriber {
 
     private final Server server;
 
+    private final Map<Integer, List<CompletableFuture<Server>>> waitingFor = new HashMap<>();
+
     public ServerStatusListener(ExarotonPlugin plugin, Server server) {
         this.plugin = plugin;
         this.proxy = plugin.getProxy();
@@ -89,6 +92,13 @@ public class ServerStatusListener extends ServerStatusSubscriber {
     @Override
     public void statusUpdate(Server oldServer, Server newServer) {
         plugin.updateServer(newServer);
+
+        if (waitingFor.containsKey(newServer.getStatus())) {
+            for (CompletableFuture<Server> future: waitingFor.get(newServer.getStatus())) {
+                future.complete(newServer);
+            }
+        }
+
         String serverName = this.serverInfo == null ? (this.name == null ? newServer.getName() : this.name) : this.serverInfo.getName();
         if (!oldServer.hasStatus(ServerStatus.ONLINE) && newServer.hasStatus(ServerStatus.ONLINE)) {
             if (proxy.getServer(serverName).isPresent()) {
@@ -130,5 +140,20 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      */
     public void unsubscribe() {
         this.server.unsubscribe();
+    }
+
+
+    /**
+     * wait until this server has reached this status
+     * @param status expected status
+     * @return server with status
+     */
+    public CompletableFuture<Server> waitForStatus(int status) {
+        CompletableFuture<Server> future = new CompletableFuture<>();
+        if (!waitingFor.containsKey(status)) {
+            waitingFor.put(status, new ArrayList<>());
+        }
+        waitingFor.get(status).add(future);
+        return future;
     }
 }

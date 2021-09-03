@@ -24,6 +24,8 @@ public class Message {
 
     public static final TextComponent API_ERROR = Message.error("An API Error occurred. Check your log for details!");
 
+    public static final TextComponent NOT_PLAYER = Message.error("This command can only be executed by players!");
+
     private final TextComponent component;
 
     private Message(TextComponent message) {
@@ -138,6 +140,17 @@ public class Message {
             content.append(getFullString((TextComponent) c));
         }
         return content.toString();
+    }
+
+    /**
+     * show that this player is being moved to a server
+     * @param serverName server name in network
+     * @return message
+     */
+    public static Message switching(String serverName) {
+        return new Message(Component.text("Switching to ")
+                .append(Component.text(serverName).color(NamedTextColor.GREEN))
+                .append(Component.text("...")));
     }
 }
 

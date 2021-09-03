@@ -46,6 +46,7 @@ public class ExarotonCommand implements SimpleCommand {
         this.registerCommand(new RestartServer(plugin));
         this.registerCommand(new AddServer(plugin));
         this.registerCommand(new RemoveServer(plugin));
+        this.registerCommand(new SwitchServer(plugin));
     }
 
     /**
