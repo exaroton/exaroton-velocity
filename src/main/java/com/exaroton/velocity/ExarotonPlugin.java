@@ -392,7 +392,8 @@ public class ExarotonPlugin {
     public void watchServers(){
         for (RegisteredServer registeredServer: proxy.getAllServers()) {
             String address = registeredServer.getServerInfo().getAddress().getHostName();
-            if (address.matches(".*\\.exaroton\\.me(:\\d+)?")) {
+            if (address.matches(".*\\.exaroton\\.me(:\\d+)?$")) {
+                address = address.replaceAll(":\\d+$", "");
                 try {
                     Server server = this.findServer(address, false);
                     if (server == null) {
