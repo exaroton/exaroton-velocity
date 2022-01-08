@@ -1,0 +1,11 @@
+{
+  "id": "exaroton",
+  "name": "exaroton",
+  "version": "${project.version}",
+  "description": "Manage exaroton servers in your velocity proxy",
+  "authors": [
+    "Aternos GmbH"
+  ],
+  "dependencies": [],
+  "main": "com.exaroton.velocity.ExarotonPlugin"
+}
