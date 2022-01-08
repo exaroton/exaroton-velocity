@@ -127,7 +127,7 @@ public class ExarotonPluginAPI {
         }
 
         String name = plugin.findServerName(server.getAddress());
-        Optional<RegisteredServer> registeredServer = plugin.getProxy().getServer(name);
+        Optional<RegisteredServer> registeredServer = name == null ? Optional.empty() : plugin.getProxy().getServer(name);
 
         return plugin.listenToStatus(server, registeredServer.map(RegisteredServer::getServerInfo).orElse(null), name);
     }
