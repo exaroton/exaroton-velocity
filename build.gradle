@@ -26,6 +26,11 @@ dependencies {
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 publishing {
     repositories {
         maven {
@@ -40,8 +45,8 @@ publishing {
     }
 
     publications {
-        mavenJava(MavenPublication) { publication ->
-            project.shadow.component(publication)
+        mavenJava(MavenPublication) {
+            from components.java
             artifactId = 'velocity'
             pom {
                 name = 'exaroton velocity API'
