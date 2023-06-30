@@ -8,11 +8,8 @@ import com.exaroton.velocity.Message;
 import com.exaroton.velocity.ServerStatusListener;
 import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
-import java.util.logging.Level;
 
 public class StopServer extends SubCommand {
 
@@ -46,7 +43,7 @@ public class StopServer extends SubCommand {
             server.stop();
             sender.sendMessage(Message.action("Stopping", listener.getName(server)));
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
         }
     }

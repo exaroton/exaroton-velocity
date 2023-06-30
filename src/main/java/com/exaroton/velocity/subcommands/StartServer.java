@@ -8,11 +8,8 @@ import com.exaroton.velocity.Message;
 import com.exaroton.velocity.ServerStatusListener;
 import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
-import java.util.logging.Level;
 
 public class StartServer extends SubCommand {
 
@@ -37,7 +34,7 @@ public class StartServer extends SubCommand {
                 return;
             }
 
-            if (!server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
+            if (!server.hasStatus(ServerStatus.OFFLINE, ServerStatus.CRASHED)) {
                 sender.sendMessage(Message.SERVER_NOT_OFFLINE);
                 return;
             }
@@ -46,7 +43,7 @@ public class StartServer extends SubCommand {
             server.start();
             sender.sendMessage(Message.action("Starting", listener.getName(server)));
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
         }
     }

@@ -11,14 +11,13 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
-import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -29,8 +28,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,6 +53,7 @@ public class ExarotonPlugin {
      * logger
      */
     private final Logger logger;
+    private final Path folder;
 
     /**
      * server cache
@@ -72,17 +70,18 @@ public class ExarotonPlugin {
     public ExarotonPlugin(ProxyServer proxy, Logger logger, @DataDirectory final Path folder) {
         this.proxy = proxy;
         this.logger = logger;
-        try {
-            this.loadConfig(folder.toFile());
-        }
-        catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to load config file!", e);
-        }
-        ExarotonPluginAPI.setPlugin(this);
+        this.folder = folder;
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        try {
+            this.loadConfig(folder);
+        }
+        catch (IOException e) {
+            logger.error("Unable to load config file!", e);
+        }
+        ExarotonPluginAPI.setPlugin(this);
         if (this.config != null && this.createExarotonClient()) {
             this.registerCommands();
             this.runAsyncTasks();
@@ -101,16 +100,19 @@ public class ExarotonPlugin {
      * @return configuration file
      * @throws IOException exception loading config
      */
-    private File getConfigFile(File folder) throws IOException {
-        folder.mkdir();
-        File configFile = new File(folder, "config.toml");
-        if (!configFile.exists()) {
-            InputStream in = getClass().getResourceAsStream("config.toml");
-            if (in != null) {
-                Files.copy(in, configFile.toPath());
-            }
-            else {
-                configFile.createNewFile();
+    private Path getConfigFile(Path folder) throws IOException {
+        if (Files.notExists(folder)) {
+            Files.createDirectory(folder);
+        }
+        final Path configFile = folder.resolve("config.toml");
+        if (Files.notExists(configFile)) {
+            try (final InputStream in = getClass().getResourceAsStream("config.toml")) {
+                if (in != null) {
+                    Files.copy(in, configFile);
+                }
+                else {
+                    Files.createFile(configFile);
+                }
             }
         }
         return configFile;
@@ -120,13 +122,14 @@ public class ExarotonPlugin {
      * load main configuration
      * @throws IOException exception loading config
      */
-    private void loadConfig(File folder) throws IOException {
-        File configFile = this.getConfigFile(folder);
-        this.config = new Toml().read(configFile);
-        InputStream in = getClass().getResourceAsStream("/config.toml");
-        Toml defaultConfig = new Toml().read(in);
-        this.config = this.addDefaults(this.config, defaultConfig);
-        new TomlWriter().write(this.config.toMap(), configFile);
+    private void loadConfig(Path folder) throws IOException {
+        final Path configFile = this.getConfigFile(folder);
+        this.config = new Toml().read(Files.newInputStream(configFile));
+        try (final InputStream in = getClass().getResourceAsStream("/config.toml")) {
+            Toml defaultConfig = new Toml().read(in);
+            this.config = this.addDefaults(this.config, defaultConfig);
+            new TomlWriter().write(this.config.toMap(), Files.newOutputStream(configFile));
+        }
     }
 
     /**
@@ -160,7 +163,7 @@ public class ExarotonPlugin {
     public boolean createExarotonClient() {
         String apiToken = this.config.getString("apiToken");
         if (apiToken == null || apiToken.length() == 0 || apiToken.equals("example-token")) {
-            logger.log(Level.SEVERE, "Invalid API Token specified!");
+            logger.error("Invalid API Token specified!");
             return false;
         }
         else {
@@ -290,7 +293,7 @@ public class ExarotonPlugin {
             servers = Arrays.stream(getServerCache());
         }
         catch (APIException exception) {
-            logger.log(Level.SEVERE, "Failed to access API", exception);
+            logger.error("Failed to access API", exception);
             return new ArrayList<>();
         }
         if (status != null)
@@ -313,13 +316,13 @@ public class ExarotonPlugin {
         try {
             servers = Arrays.stream(getServerCache());
         } catch (APIException exception) {
-            logger.log(Level.SEVERE, "Failed to access API", exception);
-            return new ArrayList<>();
+            logger.error("Failed to access API", exception);
+            return Collections.emptyList();
         }
         servers = findWithQuery(servers, query);
         servers = servers.filter(s -> {
             String name = findServerName(s.getAddress(), s.getName());
-            return !this.getProxy().getServer(name).isPresent();
+            return this.getProxy().getServer(name).isEmpty();
         });
 
         return getAllNames(servers.toArray(Server[]::new));
@@ -385,31 +388,33 @@ public class ExarotonPlugin {
         }).schedule();
     }
 
+    private static final Pattern ADDRESS_REGEX = Pattern.compile(".*\\.exaroton\\.me(:\\d+)?$");
+
     /**
      * watch servers in the velocity config
      */
     public void watchServers(){
         for (RegisteredServer registeredServer: proxy.getAllServers()) {
             String address = registeredServer.getServerInfo().getAddress().getHostName();
-            if (address.matches(".*\\.exaroton\\.me(:\\d+)?$")) {
+            if (ADDRESS_REGEX.matcher(address).matches()) {
                 address = address.replaceAll(":\\d+$", "");
                 try {
                     Server server = this.findServer(address, false);
                     if (server == null) {
-                        logger.warning("Can't find server " + address + ". Unable to watch status changes");
+                        logger.warn("Can't find server {}. Unable to watch status changes", address);
                         return;
                     }
-                    logger.info("Found exaroton server: " + address + ". Starting to watch status changes");
+                    logger.info("Found exaroton server: {}. Starting to watch status changes", address);
                     if (server.hasStatus(ServerStatus.ONLINE)) {
                         proxy.unregisterServer(registeredServer.getServerInfo());
                         proxy.registerServer(constructServerInfo(registeredServer.getServerInfo().getName(), server));
                     } else {
                         proxy.unregisterServer(registeredServer.getServerInfo());
-                        logger.info("Server " + address + " is offline, removed it from the server list!");
+                        logger.info("Server {} is offline, removed it from the server list!", address);
                     }
                     this.listenToStatus(server, null, registeredServer.getServerInfo(), null, -1);
                 } catch (APIException e) {
-                    logger.log(Level.SEVERE, "Failed to access API, not watching "+address, e);
+                    logger.error("Failed to access API, not watching {}", address, e);
                 }
             }
         }
@@ -435,40 +440,39 @@ public class ExarotonPlugin {
                 Server server = this.findServer(query, false);
 
                 if (server == null) {
-                    logger.log(Level.WARNING, "Can't start " + query + ": Server not found");
+                    logger.warn("Can't start {}: Server not found", query);
                     continue;
                 }
 
                 if (server.hasStatus(ServerStatus.ONLINE)) {
                     String name = findServerName(server.getAddress(), server.getName());
                     if (name == null) {
-                        logger.log(Level.INFO, server.getAddress() + " is already online, adding it to proxy!");
+                        logger.info("{} is already online, adding it to proxy!", server.getAddress());
                         this.getProxy().registerServer(this.constructServerInfo(server.getName(), server));
                     } else {
-                        logger.log(Level.INFO, server.getAddress() + " is already online!");
+                        logger.info("{} is already online!", server.getAddress());
                     }
                     this.listenToStatus(server, null, null, name, -1);
                     continue;
                 }
 
-                if (server.hasStatus(new int[]{ServerStatus.STARTING,
-                        ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING})) {
-                    logger.log(Level.INFO, server.getAddress() + " is already starting!");
+                if (server.hasStatus(ServerStatus.STARTING, ServerStatus.LOADING, ServerStatus.PREPARING, ServerStatus.RESTARTING)) {
+                    logger.info("{} is already starting!", server.getAddress());
                     this.listenToStatus(server, null, null, findServerName(server.getAddress()), -1);
                     continue;
                 }
 
                 if (!server.hasStatus(ServerStatus.OFFLINE)) {
-                    logger.log(Level.WARNING, "Can't start " + server.getAddress() + ": Server isn't offline.");
+                    logger.warn("Can't start {}: Server isn't offline.", server.getAddress());
                     continue;
                 }
 
-                logger.log(Level.INFO, "Starting "+ server.getAddress());
+                logger.info("Starting {}", server.getAddress());
                 this.listenToStatus(server, null, null, findServerName(server.getAddress()), -1);
                 server.start();
 
             } catch (APIException e) {
-                logger.log(Level.SEVERE, "Failed to start "+ query +"!", e);
+                logger.error("Failed to start {}!", query, e);
             }
         }
     }
@@ -536,33 +540,33 @@ public class ExarotonPlugin {
                 Server server = this.findServer(query, false);
 
                 if (server == null) {
-                    logger.log(Level.WARNING, "Can't stop " + query + ": Server not found");
+                    logger.warn("Can't stop " + query + ": Server not found");
                     continue;
                 }
 
                 String name = findServerName(server.getAddress(), server.getName());
-                if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
-                    logger.log(Level.INFO, name + " is already offline!");
+                if (server.hasStatus(ServerStatus.OFFLINE, ServerStatus.CRASHED)) {
+                    logger.info(name + " is already offline!");
                     continue;
                 }
 
-                if (server.hasStatus(new int[]{ServerStatus.SAVING, ServerStatus.STOPPING})) {
-                    logger.log(Level.INFO, name + " is already stopping!");
+                if (server.hasStatus(ServerStatus.SAVING, ServerStatus.STOPPING)) {
+                    logger.info(name + " is already stopping!");
                     continue;
                 }
 
                 if (!server.hasStatus(ServerStatus.ONLINE)) {
-                    logger.log(Level.SEVERE, "Can't stop " + name + ": Server isn't online.");
+                    logger.error("Can't stop {}: Server isn't online.", name);
                     continue;
                 }
 
-                logger.log(Level.INFO, "Stopping " + name);
+                logger.info("Stopping " + name);
                 stopping.add(() -> {
                     server.stop();
                     return null;
                 });
             } catch (APIException e) {
-                logger.log(Level.SEVERE, "Failed to stop " + query + "!", e);
+                logger.error("Failed to stop {}!", query, e);
             }
         }
         if (stopping.size() == 0)
@@ -571,11 +575,11 @@ public class ExarotonPlugin {
         try {
             executor.invokeAll(stopping);
         } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Failed to stop servers", e);
+            logger.error("Failed to stop servers", e);
             return;
         }
 
         int count = stopping.size();
-        logger.info("Successfully stopped " + count + " server" + (count == 1 ? "" : "s") + "!");
+        logger.info("Successfully stopped {} server{}!", count, (count == 1 ? "" : "s"));
     }
 }

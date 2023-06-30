@@ -1,9 +1,9 @@
 package com.exaroton.velocity;
 
 import com.velocitypowered.api.command.CommandSource;
+import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public abstract class SubCommand {
 

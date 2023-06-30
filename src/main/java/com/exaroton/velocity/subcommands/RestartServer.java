@@ -10,7 +10,6 @@ import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
 
 import java.util.List;
-import java.util.logging.Level;
 
 public class RestartServer extends SubCommand {
 
@@ -44,7 +43,7 @@ public class RestartServer extends SubCommand {
             server.restart();
             sender.sendMessage(Message.action("Restarting", listener.getName(server)));
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
         }
     }

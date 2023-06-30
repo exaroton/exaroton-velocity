@@ -2,7 +2,6 @@ package com.exaroton.velocity.subcommands;
 
 import com.exaroton.api.APIException;
 import com.exaroton.api.server.Server;
-import com.exaroton.api.server.ServerStatus;
 import com.exaroton.velocity.ExarotonPlugin;
 import com.exaroton.velocity.ExarotonPluginAPI;
 import com.exaroton.velocity.Message;
@@ -11,7 +10,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
 import java.util.List;
-import java.util.logging.Level;
 
 public class SwitchServer extends SubCommand {
 
@@ -41,13 +39,13 @@ public class SwitchServer extends SubCommand {
                 return;
             }
 
-            source.sendMessage(Message.switching(plugin.findServerName(server.getAddress(), server.getName())).getComponent());
+            source.sendMessage(Message.switching(plugin.findServerName(server.getAddress(), server.getName())));
             ExarotonPluginAPI.switchServer((Player) source, server);
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             source.sendMessage(Message.API_ERROR);
         } catch (RuntimeException | InterruptedException e) {
-            logger.log(Level.SEVERE, "Failed to execute switch command", e);
+            logger.error("Failed to execute switch command", e);
             source.sendMessage(Message.error("Failed to execute switch command. Check your console for details."));
         }
     }

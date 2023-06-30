@@ -40,7 +40,7 @@ public class ExarotonPluginAPI {
             throw new NullPointerException("No server provided!");
         }
 
-        if (!server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
+        if (!server.hasStatus(ServerStatus.OFFLINE, ServerStatus.CRASHED)) {
             return false;
         }
 
@@ -158,9 +158,9 @@ public class ExarotonPluginAPI {
             throw new NullPointerException("No server provided!");
         }
 
-        if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED, ServerStatus.LOADING, ServerStatus.STARTING, ServerStatus.PREPARING})) {
+        if (server.hasStatus(ServerStatus.OFFLINE, ServerStatus.CRASHED, ServerStatus.LOADING, ServerStatus.STARTING, ServerStatus.PREPARING)) {
             ServerStatusListener listener = watchServer(server);
-            if (server.hasStatus(new int[]{ServerStatus.OFFLINE, ServerStatus.CRASHED})) {
+            if (server.hasStatus(ServerStatus.OFFLINE, ServerStatus.CRASHED)) {
                 server.start();
             }
             try {
@@ -177,7 +177,7 @@ public class ExarotonPluginAPI {
         String name = plugin.findServerName(server.getAddress(), server.getName());
 
         // add to proxy if needed
-        if (!plugin.getProxy().getServer(name).isPresent()) {
+        if (plugin.getProxy().getServer(name).isEmpty()) {
             plugin.getProxy().registerServer(plugin.constructServerInfo(name, server));
         }
         return player.createConnectionRequest(plugin.getProxy().getServer(name).get()).connect();

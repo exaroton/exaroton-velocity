@@ -8,15 +8,10 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
+import org.slf4j.Logger;
 
-import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ServerStatusListener extends ServerStatusSubscriber {
 
@@ -111,7 +106,7 @@ public class ServerStatusListener extends ServerStatusSubscriber {
         }
         else if (oldServer.hasStatus(ServerStatus.ONLINE) && !newServer.hasStatus(ServerStatus.ONLINE)) {
             Optional<RegisteredServer> registeredServer = this.proxy.getServer(serverName);
-            if (!registeredServer.isPresent()) {
+            if (registeredServer.isEmpty()) {
                 this.sendInfo(Message.error("Server " + serverName + " is not registered in velocity network!"), true);
                 return;
             }
@@ -124,8 +119,8 @@ public class ServerStatusListener extends ServerStatusSubscriber {
      * send message to all subscribed sources
      * @param message message
      */
-    public void sendInfo(TextComponent message, boolean unsubscribe) {
-        logger.log(Level.INFO, Message.getFullString(message));
+    public void sendInfo(Component message, boolean unsubscribe) {
+        logger.info(Message.getFullString(message));
         if (sender != null && !sender.equals(proxy.getConsoleCommandSource())) {
             sender.sendMessage(message);
             if (unsubscribe) {
