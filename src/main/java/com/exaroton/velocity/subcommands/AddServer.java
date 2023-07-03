@@ -10,7 +10,6 @@ import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
 
 import java.util.List;
-import java.util.logging.Level;
 
 public class AddServer extends SubCommand {
 
@@ -37,7 +36,7 @@ public class AddServer extends SubCommand {
 
             ServerStatusListener listener = plugin.listenToStatus(server, sender, null, plugin.findServerName(server.getAddress()), ServerStatus.ONLINE);
             String name = listener.getName(server);
-            sender.sendMessage(Message.watching(name).getComponent());
+            sender.sendMessage(Message.watching(name));
 
             if (server.hasStatus(ServerStatus.ONLINE)) {
                 if (plugin.getProxy().getServer(name).isPresent()) {
@@ -45,11 +44,11 @@ public class AddServer extends SubCommand {
                 }
                 else {
                     plugin.getProxy().registerServer(plugin.constructServerInfo(name, server));
-                    sender.sendMessage(Message.added(name).getComponent());
+                    sender.sendMessage(Message.added(name));
                 }
             }
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
         }
     }

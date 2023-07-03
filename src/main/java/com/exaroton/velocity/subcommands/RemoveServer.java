@@ -6,12 +6,10 @@ import com.exaroton.velocity.ExarotonPlugin;
 import com.exaroton.velocity.Message;
 import com.exaroton.velocity.SubCommand;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RemoveServer extends SubCommand {
@@ -33,7 +31,7 @@ public class RemoveServer extends SubCommand {
         try {
             String name = args[0];
             Optional<RegisteredServer> velocityServer = plugin.getProxy().getServer(name);
-            if (!velocityServer.isPresent()) {
+            if (velocityServer.isEmpty()) {
                 sender.sendMessage(Message.SERVER_NOT_FOUND);
                 return;
             }
@@ -41,9 +39,9 @@ public class RemoveServer extends SubCommand {
             Server server = plugin.findServer(name, false);
             plugin.stopListeningToStatus(server.getId());
             plugin.getProxy().unregisterServer(velocityServer.get().getServerInfo());
-            sender.sendMessage(Message.removed(name).getComponent());
+            sender.sendMessage(Message.removed(name));
         } catch (APIException e) {
-            logger.log(Level.SEVERE, "An API Error occurred!", e);
+            logger.error("An API Error occurred!", e);
             sender.sendMessage(Message.API_ERROR);
         }
     }
