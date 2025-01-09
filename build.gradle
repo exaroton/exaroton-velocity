@@ -145,9 +145,8 @@ hangarPublish {
                 jar.set(tasks.shadowJar.outputs.files.singleFile)
 
                 platformVersions.set(project.hangarVelocityVersions.split(",").collect { it.trim() })
+                changelog.set(rootProject.file("CHANGELOG.md").text)
             }
         }
     }
 }
-
-
