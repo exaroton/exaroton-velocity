@@ -1,8 +1,9 @@
 plugins {
     id 'java-library'
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'maven-publish'
     id 'signing'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'xyz.jpenilla.run-velocity' version '2.3.1'
 }
 
 group 'com.exaroton'
@@ -17,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    shadow "com.velocitypowered:velocity-api:3.1.1"
+    shadow "com.velocitypowered:velocity-api:${project.velocityVersion}"
     annotationProcessor "com.velocitypowered:velocity-api:3.1.1"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
@@ -30,6 +31,9 @@ java {
     withJavadocJar()
     withSourcesJar()
 }
+
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
 
 publishing {
     repositories {
@@ -78,6 +82,7 @@ publishing {
 signing {
     sign publishing.publications.mavenJava
 }
+
 tasks.withType(Sign) {
     onlyIf { isReleaseVersion }
 }
@@ -90,4 +95,10 @@ processResources {
 
 shadowJar {
     archiveClassifier.set('')
+}
+
+tasks {
+    runVelocity {
+        velocityVersion(project.velocityVersion)
+    }
 }
