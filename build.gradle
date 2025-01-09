@@ -142,10 +142,9 @@ hangarPublish {
         platforms {
             register(io.papermc.hangarpublishplugin.model.Platforms.VELOCITY) {
                 // Set the JAR file to upload
-                jar.set(tasks.shadowJar.flatMap { it.archiveFile })
+                jar.set(tasks.shadowJar.outputs.files.singleFile)
 
-
-                platformVersions.set(hangarVelocityVersion.split(",").map { it.trim() })
+                platformVersions.set(project.hangarVelocityVersions.split(",").collect { it.trim() })
             }
         }
     }
